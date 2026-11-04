@@ -43,6 +43,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .bar .ttl{font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.01em}
 .tabs{display:flex;gap:4px;margin-left:auto;background:var(--bg);padding:3px;border-radius:9px}
 .tab{border:0;background:transparent;padding:6px 14px;border-radius:7px;cursor:pointer;color:var(--muted);font-weight:500}
+.run{font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;white-space:nowrap}
+.run:hover{text-decoration:underline}
 .tab[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(20,33,58,.12)}
 
 main{max-width:1440px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -187,6 +189,7 @@ table.rec tr:last-child td{border-bottom:0}
     <button class="tab" role="tab" id="tab-eval" aria-selected="true">평가하기</button>
     <button class="tab" role="tab" id="tab-records" aria-selected="false">기록 <span id="rec-count"></span></button>
   </div>
+  <a class="run" href="runner.html">테스트 진행 →</a>
 </div></header>
 
 <main>
@@ -207,10 +210,6 @@ table.rec tr:last-child td{border-bottom:0}
         <datalist id="dl-class"></datalist>
       </div>
 
-      <div class="panel">
-        <h2>학습 성향</h2>
-        <div class="styles" id="styles"></div>
-      </div>
 
       <div class="panel">
         <h2>말하기 평가</h2>
@@ -317,10 +316,6 @@ function blank(){
 
 /* ---------- form ---------- */
 function buildForm(){
-  $('styles').innerHTML = PAIRS.map(p=>`
-    <div class="pair"><span class="cap">${p.cap}</span>
-      <div class="seg">${[p.a,p.b].map(([k,l])=>`<button type="button" class="chip" id="st-${k}" data-st="${k}" aria-pressed="false">${l}</button>`).join('')}</div>
-    </div>`).join('');
   $('scores').innerHTML = GROUPS.map(g=>`<div class="grp">${g.name}</div>`+g.items.map(it=>`
     <div class="row"><div class="nm"><span class="en">${it.en}</span><span class="ko">${it.ko}</span></div>
       <div class="scale" role="group" aria-label="${it.en}">${[1,2,3,4,5].map(n=>`<button type="button" class="sc${n===it.t?' tgt':''}" id="sc-${it.k}-${n}" data-k="${it.k}" data-n="${n}" aria-pressed="false" title="${n===it.t?'목표 '+n:n}">${n}</button>`).join('')}</div>
@@ -382,7 +377,6 @@ function renderSheet(){
       <div class="k">이름</div><div class="v">${v(s.name)}</div><div class="k">나이</div><div class="v">${v(s.age)}</div><div class="k">연락처</div><div class="v">${v(s.phone)}</div>
       <div class="k">상담일</div><div class="v">${v(fmtDate(s.date))}</div><div class="k">상담자</div><div class="v">${v(s.counselor)}</div><div class="k">Class</div><div class="v"><b>${v(s.cls)}</b></div>
     </div>
-    <div class="s-styles">${PAIRS.map(p=>`<div class="s-pair"><div class="c">${p.cap}</div><div class="o">${[p.a,p.b].map(([k,l])=>`<span class="${s.styles[k]?'on':''}">${l}</span>`).join('')}</div></div>`).join('')}</div>
     <table class="s-table">${GROUPS.map(g=>`
       <tr><th colspan="2">${g.name}</th>${[1,2,3,4,5].map(n=>`<th class="n">${n}</th>`).join('')}</tr>
       ${g.items.map(it=>`<tr><td>${it.en}</td><td class="ko">${it.ko}</td>${[1,2,3,4,5].map(n=>`<td class="n${s.scores[it.k]===n?' me':''}${it.t===n?' tg':''}"><span>${n}</span></td>`).join('')}</tr>`).join('')}`).join('')}
@@ -548,7 +542,16 @@ async function loadAll(){
   records=[]; loaded=true;
   data.forEach(r=>records.push({...r.data,id:r.id}));
   applyRow('__none__',null);
+  openFromHash();
 }
+/* the test runner (runner.html) saves a record, then sends you here with #open=<id> */
+function openFromHash(){
+  const m=location.hash.match(/^#open=([A-Za-z0-9_-]+)$/); if(!m) return;
+  const r=records.find(x=>x.id===m[1]); if(!r) return;
+  history.replaceState(null,'',location.pathname+location.search);
+  loadRecord(r);
+}
+window.addEventListener('hashchange',openFromHash);
 function subscribe(){
   if(channel) sb.removeChannel(channel);
   channel = sb.channel('leveltests-live')
