@@ -90,6 +90,9 @@ textarea{min-height:150px;resize:vertical;line-height:1.6}
 .lv{display:flex;gap:4px;margin-bottom:10px}
 .lv button{border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:4px 12px;cursor:pointer;font-size:12.5px}
 .lv button[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--surface)}
+.lv button{display:inline-flex;align-items:center;gap:6px}
+.lv .dots{display:inline-flex;gap:2px}
+.lv .dots i{width:5px;height:5px;border-radius:50%;background:currentColor;display:block}
 .qs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .qs li{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:9px;cursor:pointer;background:var(--bg)}
 .qs li .box{width:16px;height:16px;border:1.5px solid var(--muted);border-radius:4px;flex:none;margin-top:3px;display:grid;place-items:center;font-size:11px;color:var(--accent-fg)}
@@ -394,16 +397,11 @@ const STAGES = [
       mid:['Tell me about your last trip.','Have you ever had a problem while traveling? What happened, and how did you feel?'],
       high:['Tell me about a time things did not go as planned. What had you expected?','What were you doing when you heard some big news recently?']},
    tip:'시제 진단의 핵심 단계입니다. Have you ever(현재완료) · was -ing(과거진행) · had p.p.(과거완료)가 자연스럽게 나오는지, 감정을 "왜"와 함께 말하는지 확인하세요.'},
-  {id:'s4',name:'계획과 목적',min:'3분',items:['future','purpose'],
-   q:{low:['What are you going to do this weekend?','Why do you want to learn English?'],
-      mid:['What are your plans for next year?','Why did you choose your job or major?'],
-      high:['Where do you see yourself in five years, and what are you doing now to get there?','What is one goal you have set for yourself, and how will you reach it?']},
-   tip:'"Why" 질문에 because 한 마디로 끝나는지, to / so that으로 목적을 펼치는지 보세요.'},
-  {id:'s5',name:'상황 대처 · 조동사',min:'4분',items:['context'],
-   q:{low:['Ask me three questions about my weekend.','What can you do well? What can\'t you do?'],
-      mid:['Role-play: Call me to book a table for four people this Friday.','My friend can\'t sleep well. What should she do?'],
-      high:['Role-play: Your online order arrived damaged. Call the store, explain, and ask for a solution.','Looking back, what could you have done differently at work or school?','If you could live anywhere, where would you live, and why?']},
-   tip:'질문을 "만들 수" 있는지도 함께 보세요. 한국 학습자는 답하기보다 묻기가 훨씬 약한 경우가 많습니다.'},
+  {id:'s4',name:'계획과 목적 · 조동사',min:'4분',items:['future','purpose','context'],
+   q:{low:['What are you going to do this weekend?','Why do you want to learn English?','What can you do well? What can\'t you do?'],
+      mid:['What are your plans for next year?','Why did you choose your job or major?','My friend can\'t sleep well. What should she do?'],
+      high:['Where do you see yourself in five years, and what are you doing now to get there?','Looking back, what could you have done differently at work or school?','If you could live anywhere, where would you live, and why?']},
+   tip:'"Why" 질문에 because 한 마디로 끝나는지, to / so that으로 목적을 펼치는지 보세요. 세 번째 질문은 조동사(can, should, could have p.p., would) 채점용입니다.'},
   {id:'s6',name:'소리 내어 읽기',min:'3분',items:['stress','liaison'],read:true,
    q:{low:['photograph · hotel · banana · vegetable','Pick it up. / Check it out.','Not at all.'],
       mid:['photograph → photography → photographic','record (명사) / record (동사) · comfortable · develop','What are you going to do? / I want to get an apple.'],
@@ -519,11 +517,11 @@ function vInterview(){
 
 function vSpeak(){
   const a=avg();
-  return `${exampleBar()}<div class="lead"><div><h1>말하기 진단</h1><p>각 단계는 <b>중급</b> 질문으로 시작하세요. 막힘 없이 답하면 상급으로, 두 번 이상 무너지면 기초로 내립니다. 물어본 질문은 눌러서 표시해 두세요.</p></div><span class="time">약 15~20분</span></div>
+  return `${exampleBar()}<div class="lead"><div><h1>말하기 진단</h1><p>각 단계는 <b>중급(●●)</b> 질문으로 시작하세요. 학생 화면에는 난이도 이름 대신 점 개수로만 보여요. 막힘 없이 답하면 상급으로, 두 번 이상 무너지면 기초로 내립니다. 물어본 질문은 눌러서 표시해 두세요.</p></div><span class="time">약 15~20분</span></div>
   <div class="stack">${STAGES.map((g,gi)=>{const lv=S.level[g.id]||'mid';const qs=g.q[lv];
     return `<section class="panel"><div class="stage-h"><span class="stage-no">${gi+1}</span><div class="meta"><h3>${g.name}</h3><p>${g.min} · 채점: ${g.items.map(k=>ITEMS[k].ko).join(', ')}</p></div></div>
     <div class="stage"><div>
-      <div class="lv" role="group" aria-label="난이도">${[['low','기초'],['mid','중급'],['high','상급']].map(([v,l])=>`<button type="button" data-lv="${g.id}" data-v="${v}" aria-pressed="${lv===v}">${l}</button>`).join('')}</div>
+      <div class="lv" role="group" aria-label="난이도">${[['low','기초',1],['mid','중급',2],['high','상급',3]].map(([v,l,n])=>`<button type="button" data-lv="${g.id}" data-v="${v}" aria-pressed="${lv===v}"><span class="dots">${'<i></i>'.repeat(n)}</span>${l}</button>`).join('')}</div>
       ${g.pic?`<figure class="art">${WS_SCENES.svg(lv)}</figure>`:''}
       <ul class="qs">${qs.map((q,qi)=>{const key=g.id+lv+qi;return `<li role="checkbox" tabindex="0" data-ask="${key}" aria-checked="${!!S.asked[key]}"><span class="box">${S.asked[key]?'✓':''}</span><span class="en">${esc(q)}</span></li>`;}).join('')}</ul>
       <p class="tip">${esc(g.tip)}</p>
